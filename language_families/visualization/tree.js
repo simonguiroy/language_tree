@@ -3,10 +3,21 @@ const width = window.innerWidth;
 const height = 1000;
 
 // Add zoom and pan support
+/*
 const g = svg.append("g");
 svg.call(d3.zoom().on("zoom", (event) => {
     g.attr("transform", event.transform);
 }));
+*/
+const zoom = d3.zoom().on("zoom", (event) => {
+    g.attr("transform", event.transform);
+});
+
+const g = svg.append("g")
+    .attr("transform", `translate(100, ${height / 2})`);  // initial transform
+
+svg.call(zoom)
+   .call(zoom.transform, d3.zoomIdentity.translate(100, height / 2));  // also tell zoom behavior
 
 const treeLayout = d3.tree().nodeSize([12, 180]); // tighter spacing
 
@@ -73,6 +84,7 @@ d3.json("glottolog_named_tree.json").then(data => {
             .filter(d => d.depth > 0) // hide virtual root
             .attr("class", "node")
             .attr("transform", d => `translate(${source.y},${source.x})`)
+            /* // disabling clicking on gray dot to expand/collapse node
             .on("click", (event, d) => {
                 // Left click: toggle
                 if (d.children) {
@@ -93,18 +105,60 @@ d3.json("glottolog_named_tree.json").then(data => {
                     expandAll(d);    // If collapsed — expand all
                 }
                 update(d);
-            });
-
+            })
+            */
+            ;
+        // Gray dots for collapsed nodes (currently unused):
+        /*
         nodeEnter.filter(d => d._children && d._children.length > 0)
             .append("circle")
             .attr("r", 2.5)
             .attr("fill", "#555");
+        */
 
         nodeEnter.append("text")
             .attr("dy", 3)
             .attr("x", d => d.children || d._children ? -6 : 6)
             .attr("text-anchor", d => d.children || d._children ? "end" : "start")
-            .text(d => d.data.name);
+            .text(d => d.data.name)
+            .on("click", (event, d) => {
+                // Left click on text toggles node
+                if (d.children) {
+                    d._children = d.children;
+                    d.children = null;
+                } else {
+                    d.children = d._children;
+                    d._children = null;
+                }
+                update(d);
+            })
+            .on("contextmenu", (event, d) => {
+                event.preventDefault(); // prevent browser menu
+                const hasVisibleChildren = d.children && d.children.length > 0;
+                if (hasVisibleChildren) {
+                    collapseAll(d);  // If already expanded — collapse
+                } else {
+                    expandAll(d);    // If collapsed — expand all
+                }
+                update(d);
+            })
+            ;
+
+        // Add gray highlight behind text for leaf nodes
+        nodeEnter.filter(d => !d.children && !d._children)
+            .each(function(d) {
+                const g = d3.select(this);
+                const text = g.select("text");
+                const bbox = text.node().getBBox();
+                g.insert("rect", "text")
+                    .attr("x", bbox.x - 2)
+                    .attr("y", bbox.y - 1)
+                    .attr("width", bbox.width + 4)
+                    .attr("height", bbox.height + 0)
+                    .attr("fill", "#ddd")
+                    .attr("rx", 2)
+                    .attr("ry", 2);
+            });
 
         const nodeUpdate = nodeEnter.merge(node);
 
