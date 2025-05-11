@@ -3,12 +3,6 @@ const width = window.innerWidth;
 const height = 1000;
 
 // Add zoom and pan support
-/*
-const g = svg.append("g");
-svg.call(d3.zoom().on("zoom", (event) => {
-    g.attr("transform", event.transform);
-}));
-*/
 const zoom = d3.zoom().on("zoom", (event) => {
     g.attr("transform", event.transform);
 });
@@ -130,15 +124,8 @@ d3.json("glottolog_named_tree_rich.json").then(data => {
                     d.children = d._children;
                     d._children = null;
                 }
-                // Update coordinate display if it's a leaf
+                // Update coordinate display
                 /*
-                if (!d.children && !d._children) {
-                    const lat = d.data.latitude != null ? d.data.latitude : "--";
-                    const lon = d.data.longitude != null ? d.data.longitude : "--";
-                    document.getElementById("lat").textContent = lat;
-                    document.getElementById("lon").textContent = lon;
-                }
-                */
                 if (!d.children && !d._children) {
                     const lat = d.data.latitude;
                     const lon = d.data.longitude;
@@ -163,6 +150,30 @@ d3.json("glottolog_named_tree_rich.json").then(data => {
                             .attr("stroke", "#fff")
                             .attr("stroke-width", 1);
                     }
+                }
+                */
+                if (d.data.latitude != null && d.data.longitude != null) {
+                    const lat = d.data.latitude;
+                    const lon = d.data.longitude;
+
+                    document.getElementById("lat").textContent = lat;
+                    document.getElementById("lon").textContent = lon;
+
+                    mapSvg.selectAll(".lang-dot").remove();
+
+                    const [x, y] = projection([lon, lat]);
+                    mapSvg.append("circle")
+                        .attr("class", "lang-dot")
+                        .attr("cx", x)
+                        .attr("cy", y)
+                        .attr("r", 4)
+                        .attr("fill", "red")
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 1);
+                } else {
+                    document.getElementById("lat").textContent = "--";
+                    document.getElementById("lon").textContent = "--";
+                    mapSvg.selectAll(".lang-dot").remove();
                 }
                 update(d);
             })
