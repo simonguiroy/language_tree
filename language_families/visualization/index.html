@@ -8,11 +8,40 @@
     .node circle { fill: #999; }
     .node text { font-size: 10px; pointer-events: all; }
     .link { fill: none; stroke: #ccc; stroke-width: 1.5px; }
+    #coords-box {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      border-radius: 4px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+    }
+    #world-map-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 400px; /* Adjust as needed */
+      height: auto;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      padding: 5px;
+    }
   </style>
 </head>
 <body>
   <svg width="100%" height="1000"></svg>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="tree.js"></script>
+  <div id="coords-box">
+    <strong>Last clicked leaf:</strong><br>
+    Latitude: <span id="lat">--</span><br>
+    Longitude: <span id="lon">--</span>
+  </div>
+  <div id="world-map-container">
+    <svg id="mini-map" width="400" height="200"></svg>
+  </div>
 </body>
 </html>

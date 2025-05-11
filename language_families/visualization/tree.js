@@ -21,7 +21,7 @@ svg.call(zoom)
 
 const treeLayout = d3.tree().nodeSize([12, 180]); // tighter spacing
 
-d3.json("glottolog_named_tree.json").then(data => {
+d3.json("glottolog_named_tree_rich.json").then(data => {
     console.log("Loaded root object:", data);  // Optional debug
 
     let i = 0; // node ID counter — must be here!
@@ -130,6 +130,40 @@ d3.json("glottolog_named_tree.json").then(data => {
                     d.children = d._children;
                     d._children = null;
                 }
+                // Update coordinate display if it's a leaf
+                /*
+                if (!d.children && !d._children) {
+                    const lat = d.data.latitude != null ? d.data.latitude : "--";
+                    const lon = d.data.longitude != null ? d.data.longitude : "--";
+                    document.getElementById("lat").textContent = lat;
+                    document.getElementById("lon").textContent = lon;
+                }
+                */
+                if (!d.children && !d._children) {
+                    const lat = d.data.latitude;
+                    const lon = d.data.longitude;
+
+                    const latText = lat != null ? lat : "--";
+                    const lonText = lon != null ? lon : "--";
+
+                    document.getElementById("lat").textContent = latText;
+                    document.getElementById("lon").textContent = lonText;
+
+                    // Remove any previous dot
+                    mapSvg.selectAll(".lang-dot").remove();
+
+                    if (lat != null && lon != null) {
+                        const [x, y] = projection([lon, lat]);
+                        mapSvg.append("circle")
+                            .attr("class", "lang-dot")
+                            .attr("cx", x)
+                            .attr("cy", y)
+                            .attr("r", 4)
+                            .attr("fill", "red")
+                            .attr("stroke", "#fff")
+                            .attr("stroke-width", 1);
+                    }
+                }
                 update(d);
             })
             .on("contextmenu", (event, d) => {
@@ -144,20 +178,28 @@ d3.json("glottolog_named_tree.json").then(data => {
             })
             ;
 
-        // Add gray highlight behind text for leaf nodes
+        // Add highlight behind text for leaf nodes
         nodeEnter.filter(d => !d.children && !d._children)
-            .each(function(d) {
+            .each(function (d) {
                 const g = d3.select(this);
                 const text = g.select("text");
+
                 const bbox = text.node().getBBox();
+
+                const isLanguage = d.data.level === "language"; // else: "dialect"
+                const fillColor = isLanguage ? "#000" : "#ddd";
+                const textColor = isLanguage ? "#fff" : "#000";
+
                 g.insert("rect", "text")
                     .attr("x", bbox.x - 2)
                     .attr("y", bbox.y - 1)
                     .attr("width", bbox.width + 4)
-                    .attr("height", bbox.height + 0)
-                    .attr("fill", "#ddd")
+                    .attr("height", bbox.height + 2)
+                    .attr("fill", fillColor)
                     .attr("rx", 2)
                     .attr("ry", 2);
+
+                text.attr("fill", textColor);  // set text color
             });
 
         const nodeUpdate = nodeEnter.merge(node);
@@ -208,4 +250,28 @@ d3.json("glottolog_named_tree.json").then(data => {
     console.log("Links:", links);
     }
 
+    const mapSvg = d3.select("#mini-map");
+    const mapWidth = +mapSvg.attr("width");
+    const mapHeight = +mapSvg.attr("height");
+
+    const projection = d3.geoMercator()
+        .scale(mapWidth / (2 * Math.PI)) // auto-scale for Mercator's unit sphere
+        .translate([mapWidth / 2, mapHeight / 1.5]); // center visually
+
+    // === WORLD MAP (BOTTOM RIGHT CORNER) ===
+    // source geojson file : https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson
+    d3.json("world.geojson").then(world => {
+
+        const path = d3.geoPath().projection(projection);
+
+        mapSvg.append("g")
+            .selectAll("path")
+            .data(world.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("fill", "#ccc")
+            .attr("stroke", "#999")
+            .attr("stroke-width", 0.5);
+    });
 });
