@@ -3,8 +3,6 @@
 # Kill previous server on port 8000 if running
 lsof -ti tcp:8000 | xargs kill -9 2>/dev/null
 
-# Navigate to the visualization folder
-cd visualization || { echo "❌ visualization folder not found"; exit 1; }
 
 # Start HTTP server in the background
 python3 -m http.server 8000 &

@@ -67,7 +67,7 @@ full_tree = {
 # Define output paths
 output_paths = [
     "../data/glottolog_named_tree_rich.json",
-    "../visualization/glottolog_named_tree_rich.json"
+    "../glottolog_named_tree_rich.json"
 ]
 
 # Ensure directories exist and write JSON
@@ -76,4 +76,4 @@ for path in output_paths:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(full_tree, f, indent=2, ensure_ascii=False)
 
-print("Rich Glottolog tree saved as 'glottolog_named_tree_rich.json' in both data and visualization folders")
+print("Rich Glottolog tree saved as 'glottolog_named_tree_rich.json' in both data and root folders")
